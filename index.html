@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>✦ 我的天數計算器 ✦</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --pink-light: #fff5f9;
+    --pink-border: #f9c5df;
+    --pink-mid: #e87fb4;
+    --pink-dark: #c96fa8;
+    --pink-deep: #a0547e;
+    --purple-mid: #a78be8;
+    --purple-dark: #7b6fe0;
+    --teal-light: #f0faf7;
+    --teal-border: #b0e5d6;
+    --teal-mid: #7dcfb6;
+    --teal-dark: #3aada0;
+    --teal-deep: #2d8a80;
+    --text-main: #3a3a3a;
+    --text-muted: #999;
+    --bg: #fdf7fc;
+    --card-shadow: 0 4px 20px rgba(200,100,160,0.08);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    color: var(--text-main);
+  }
+
+  /* ── top bar ── */
+  .topbar {
+    background: white;
+    border-bottom: 1.5px solid var(--pink-border);
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-title {
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #c96fa8, #9b7fe8, #6fbfd8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── layout ── */
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 1.8rem 1.2rem 3rem;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .hero-title {
+    font-size: clamp(22px, 5vw, 30px);
+    font-weight: 800;
+    background: linear-gradient(135deg, #c96fa8, #9b7fe8, #6fbfd8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+  .hero-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* ── tabs ── */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    background: #f3eef8;
+    padding: 5px;
+    border-radius: 999px;
+    margin-bottom: 2rem;
+  }
+  .tab {
+    flex: 1;
+    padding: 9px 0;
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.22s;
+    background: transparent;
+    color: #aaa;
+  }
+  .tab.active-down { background: linear-gradient(135deg, #e87fb4, #c96fa8); color: #fff; }
+  .tab.active-up   { background: linear-gradient(135deg, #7dcfb6, #3aada0); color: #fff; }
+  .tab.active-all  { background: linear-gradient(135deg, #a78be8, #7b6fe0); color: #fff; }
+
+  /* ── section header ── */
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    margin-top: 8px;
+  }
+  .section-icon {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .si-pink { background: linear-gradient(135deg, #f9b8d4, #e87fb4); }
+  .si-teal { background: linear-gradient(135deg, #a8e6d5, #7dcfb6); }
+  .section-title { font-size: 16px; font-weight: 800; color: var(--text-main); }
+
+  /* ── card ── */
+  .card {
+    border-radius: 24px;
+    padding: 1.3rem 1.4rem 1rem;
+    margin-bottom: 12px;
+    border: 2px solid;
+    position: relative;
+    overflow: hidden;
+    background: white;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.15s;
+  }
+  .card:hover { transform: translateY(-2px); }
+  .card::before {
+    content: '';
+    position: absolute;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    top: -28px; right: -28px;
+    opacity: 0.13;
+    pointer-events: none;
+  }
+  .card-down { background: var(--pink-light); border-color: var(--pink-border); }
+  .card-down::before { background: var(--pink-mid); }
+  .card-up   { background: var(--teal-light); border-color: var(--teal-border); }
+  .card-up::before   { background: var(--teal-mid); }
+
+  /* ── card body ── */
+  .card-body {
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .card-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .fl-pink { color: var(--pink-dark); }
+  .fl-teal { color: var(--teal-dark); }
+
+  .custom-input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1.5px solid;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: white;
+  }
+  .custom-input:focus { box-shadow: 0 0 0 3px rgba(200,111,168,0.15); }
+  .inp-pink { border-color: #f0a8cc; color: var(--pink-deep); }
+  .inp-pink:focus { border-color: var(--pink-mid); }
+  .inp-teal { border-color: #8fd4c3; color: var(--teal-deep); }
+  .inp-teal:focus { border-color: var(--teal-mid); }
+
+  /* ── result bubble ── */
+  .result-box {
+    border-radius: 20px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 110px;
+    flex-shrink: 0;
+    gap: 2px;
+    text-align: center;
+  }
+  .rb-pink   { background: linear-gradient(145deg, #e87fb4, #c96fa8); }
+  .rb-teal   { background: linear-gradient(145deg, #7dcfb6, #3aada0); }
+  .rb-purple { background: linear-gradient(145deg, #a78be8, #7b6fe0); }
+
+  .rb-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.82); }
+  .rb-num   { font-size: clamp(32px, 6vw, 42px); font-weight: 800; color: #fff; line-height: 1.1; }
+  .rb-unit  { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.85); }
+
+  /* ── card footer ── */
+  .card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1.5px dashed;
+  }
+  .cf-pink { border-color: var(--pink-border); }
+  .cf-teal { border-color: var(--teal-border); }
+
+  .pill {
+    font-size: 11px; font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 999px;
+  }
+  .pill-pink { background: #f9d4e8; color: var(--pink-deep); }
+  .pill-teal { background: #c5ede3; color: var(--teal-deep); }
+
+  .del-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 14px; color: #ccc;
+    padding: 4px 8px; border-radius: 8px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .del-btn:hover { background: rgba(0,0,0,0.06); color: #999; }
+
+  /* ── add button ── */
+  .add-btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 18px;
+    border: 2px dashed;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    transition: background 0.18s;
+  }
+  .ab-pink { border-color: #f0a8cc; color: var(--pink-dark); }
+  .ab-pink:hover { background: #fff0f7; }
+  .ab-teal { border-color: #8fd4c3; color: var(--teal-dark); }
+  .ab-teal:hover { background: #f0fdf9; }
+
+  .plus-circle {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 800; color: #fff; line-height: 1;
+    flex-shrink: 0;
+  }
+  .pc-pink { background: linear-gradient(135deg, #e87fb4, #c96fa8); }
+  .pc-teal { background: linear-gradient(135deg, #7dcfb6, #3aada0); }
+
+  /* ── divider ── */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 1.8rem 0 1.4rem;
+  }
+  .div-line {
+    flex: 1; height: 2px; border-radius: 99px;
+    background: linear-gradient(90deg, #f9c5df, #d4c5f9, #b0e5d6);
+  }
+  .div-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: linear-gradient(135deg, #c96fa8, #9b7fe8);
+    flex-shrink: 0;
+  }
+
+  /* ── save note ── */
+  .save-note {
+    margin-top: 1.5rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .save-pill {
+    background: linear-gradient(135deg, #f9d4e8, #e5d4f9, #c5ede3);
+    border-radius: 999px;
+    padding: 6px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #9b7fe8;
+  }
+
+  /* ── custom name input (hidden by default) ── */
+  .custom-name-wrap { display: none; }
+  .custom-name-wrap.show { display: block; margin-top: 6px; }
+
+  /* ── empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* ── RWD ── */
+  @media (max-width: 480px) {
+    .container { padding: 1.2rem 0.8rem 3rem; }
+    .card { padding: 1.1rem 1rem 0.9rem; border-radius: 20px; }
+    .card-body { flex-direction: column; gap: 12px; }
+    .result-box {
+      flex-direction: row;
+      border-radius: 14px;
+      padding: 12px 16px;
+      min-width: unset;
+      justify-content: center;
+      gap: 10px;
+    }
+    .rb-label { font-size: 13px; }
+    .rb-num   { font-size: 28px; }
+    .rb-unit  { font-size: 13px; }
+    .topbar-title { font-size: 16px; }
+    .tabs { gap: 5px; }
+    .tab  { font-size: 12px; padding: 8px 0; }
+  }
+
+  @media (max-width: 360px) {
+    .result-box { gap: 6px; }
+    .rb-num { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">✦ 我的天數計算器 ✦</span>
+</div>
+
+<div class="container">
+  <div class="hero">
+    <div class="hero-title">✦ 我的天數計算器 ✦</div>
+    <div class="hero-sub">倒數每一個期待，記錄每一段努力 🌸</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active-down" onclick="switchTab('down')">⏳ 倒數</button>
+    <button class="tab" onclick="switchTab('up')">🌱 正數</button>
+    <button class="tab" onclick="switchTab('all')">✨ 全部</button>
+  </div>
+
+  <!-- 倒數區塊 -->
+  <div id="section-down">
+    <div class="section-head">
+      <div class="section-icon si-pink">⏳</div>
+      <span class="section-title">倒數計算器</span>
+    </div>
+    <div id="list-down"></div>
+    <button class="add-btn ab-pink" onclick="addCard('down')">
+      <span class="plus-circle pc-pink">+</span>
+      新增倒數項目
+    </button>
+  </div>
+
+  <div class="divider" id="divider-main">
+    <div class="div-line"></div>
+    <div class="div-dot"></div>
+    <div class="div-line"></div>
+  </div>
+
+  <!-- 正數區塊 -->
+  <div id="section-up">
+    <div class="section-head">
+      <div class="section-icon si-teal">🌱</div>
+      <span class="section-title">正數計算器</span>
+    </div>
+    <div id="list-up"></div>
+    <button class="add-btn ab-teal" onclick="addCard('up')">
+      <span class="plus-circle pc-teal">+</span>
+      新增正數項目
+    </button>
+  </div>
+
+  <div class="save-note">
+    <span class="save-pill">✨ 資料自動儲存，下次打開還在喔</span>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'dayCounterData_v2';
+
+const DOWN_REASONS = [
+  { value: 'discharge',  label: '🎖 退伍' },
+  { value: 'resign',     label: '💼 離職' },
+  { value: 'graduation', label: '🎓 畢業典禮' },
+  { value: 'wedding',    label: '💍 婚禮' },
+  { value: 'travel',     label: '✈️ 出發旅行' },
+  { value: 'exam',       label: '📝 考試' },
+  { value: 'contract',   label: '📋 合約到期' },
+  { value: 'moving',     label: '🏠 搬家' },
+  { value: 'retire',     label: '🎉 退休' },
+  { value: 'custom',     label: '✏️ 自訂...' },
+];
+
+const UP_REASONS = [
+  { value: 'work',    label: '💼 工作第幾天' },
+  { value: 'city',    label: '📍 在某地待了多久' },
+  { value: 'love',    label: '❤️ 交往紀念日' },
+  { value: 'quit',    label: '🚭 戒菸' },
+  { value: 'gym',     label: '🏋️ 健身連續天數' },
+  { value: 'habit',   label: '🌱 養成習慣' },
+  { value: 'custom',  label: '✏️ 自訂...' },
+];
+
+const GRADIENTS_DOWN   = ['rb-pink', 'rb-purple', 'rb-pink', 'rb-purple'];
+const EMOJIS_DOWN      = ['🎖','💼','🎓','💍','✈️','📝','📋','🏠','🎉','🌟'];
+const EMOJIS_UP        = ['💼','📍','❤️','🚭','🏋️','🌱','🌟'];
+
+let state = { down: [], up: [] };
+let activeTab = 'all';
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state = JSON.parse(raw);
+  } catch(e) {}
+  if (!state.down) state.down = [];
+  if (!state.up)   state.up   = [];
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function today() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function diffDays(dateStr) {
+  const now  = new Date(); now.setHours(0,0,0,0);
+  const target = new Date(dateStr); target.setHours(0,0,0,0);
+  return Math.round((target - now) / 86400000);
+}
+
+function getEmoji(reasons, value, idx) {
+  const i = reasons.findIndex(r => r.value === value);
+  const arr = reasons === DOWN_REASONS ? EMOJIS_DOWN : EMOJIS_UP;
+  return arr[i >= 0 ? i : idx % arr.length] || '🌟';
+}
+
+function getLabel(reasons, value, customName) {
+  if (value === 'custom') return customName || '自訂事件';
+  return (reasons.find(r => r.value === value) || {}).label || '事件';
+}
+
+/* ── render ── */
+function render() {
+  renderList('down');
+  renderList('up');
+  applyTabVisibility();
+}
+
+function renderList(type) {
+  const container = document.getElementById('list-' + type);
+  const items = state[type];
+  const reasons = type === 'down' ? DOWN_REASONS : UP_REASONS;
+
+  if (items.length === 0) {
+    container.innerHTML = `<div class="empty-state">還沒有項目，按下方按鈕新增吧 🌸</div>`;
+    return;
+  }
+
+  container.innerHTML = items.map((item, idx) => {
+    const isPink = type === 'down';
+    const days = diffDays(item.date);
+    const emoji = getEmoji(reasons, item.reason, idx);
+
+    let numText, labelTop, labelBot, gradient;
+    if (type === 'down') {
+      gradient = idx % 2 === 0 ? 'rb-pink' : 'rb-purple';
+      if (days > 0)      { labelTop = '剩下'; numText = days;  labelBot = `天 ${emoji}`; }
+      else if (days === 0) { labelTop = '就是'; numText = '今天'; labelBot = `到了！${emoji}`; }
+      else                 { labelTop = '已過'; numText = Math.abs(days); labelBot = `天 ${emoji}`; }
+    } else {
+      gradient = 'rb-teal';
+      const d = Math.abs(days);
+      labelTop = '';
+      numText  = d;
+      labelBot = `天，你好棒！${emoji}`;
+    }
+
+    const isCustom = item.reason === 'custom';
+    const customShow = isCustom ? 'show' : '';
+    const cardClass  = isPink ? 'card card-down' : 'card card-up';
+    const flClass    = isPink ? 'fl-pink' : 'fl-teal';
+    const inpClass   = isPink ? 'inp-pink' : 'inp-teal';
+    const footClass  = isPink ? 'cf-pink' : 'cf-teal';
+    const pillClass  = isPink ? 'pill-pink' : 'pill-teal';
+    const pillText   = type === 'down' ? '倒數中' : '累積中';
+
+    const reasonOpts = reasons.map(r =>
+      `<option value="${r.value}" ${r.value === item.reason ? 'selected' : ''}>${r.label}</option>`
+    ).join('');
+
+    return `
+    <div class="${cardClass}" data-id="${item.id}" data-type="${type}">
+      <div class="card-body">
+        <div class="card-fields">
+          <div class="field-group">
+            <div class="field-label ${flClass}">事件類型</div>
+            <select class="custom-input ${inpClass}" onchange="onReasonChange(this,'${type}','${item.id}')">
+              ${reasonOpts}
+            </select>
+            <div class="custom-name-wrap ${customShow}">
+              <input class="custom-input ${inpClass}" type="text" placeholder="輸入自訂名稱"
+                value="${item.customName || ''}"
+                oninput="onCustomName(this,'${type}','${item.id}')"/>
+            </div>
+          </div>
+          <div class="field-group">
+            <div class="field-label ${flClass}">${type === 'down' ? '目標日期' : '開始日期'}</div>
+            <input class="custom-input ${inpClass}" type="date" value="${item.date}"
+              onchange="onDateChange(this,'${type}','${item.id}')"/>
+          </div>
+        </div>
+        <div class="result-box ${gradient}">
+          ${labelTop ? `<div class="rb-label">${labelTop}</div>` : ''}
+          <div class="rb-num">${numText}</div>
+          <div class="rb-unit">${labelBot}</div>
+        </div>
+      </div>
+      <div class="card-foot ${footClass}">
+        <span class="pill ${pillClass}">${pillText}</span>
+        <button class="del-btn" onclick="deleteCard('${type}','${item.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function applyTabVisibility() {
+  const sd = document.getElementById('section-down');
+  const su = document.getElementById('section-up');
+  const div = document.getElementById('divider-main');
+  const tabs = document.querySelectorAll('.tab');
+
+  tabs[0].className = 'tab' + (activeTab === 'down' ? ' active-down' : '');
+  tabs[1].className = 'tab' + (activeTab === 'up'   ? ' active-up'   : '');
+  tabs[2].className = 'tab' + (activeTab === 'all'  ? ' active-all'  : '');
+
+  if (activeTab === 'down') {
+    sd.style.display = ''; su.style.display = 'none'; div.style.display = 'none';
+  } else if (activeTab === 'up') {
+    sd.style.display = 'none'; su.style.display = ''; div.style.display = 'none';
+  } else {
+    sd.style.display = ''; su.style.display = ''; div.style.display = '';
+  }
+}
+
+function switchTab(tab) { activeTab = tab; render(); }
+
+/* ── CRUD ── */
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function addCard(type) {
+  const item = { id: uid(), reason: type === 'down' ? 'discharge' : 'work', date: today(), customName: '' };
+  state[type].push(item);
+  save(); render();
+}
+
+function deleteCard(type, id) {
+  state[type] = state[type].filter(i => i.id !== id);
+  save(); render();
+}
+
+function onReasonChange(sel, type, id) {
+  const item = state[type].find(i => i.id === id);
+  if (!item) return;
+  item.reason = sel.value;
+  save();
+  // toggle custom name input
+  const wrap = sel.parentElement.querySelector('.custom-name-wrap');
+  if (wrap) wrap.classList.toggle('show', sel.value === 'custom');
+  renderList(type);
+}
+
+function onDateChange(inp, type, id) {
+  const item = state[type].find(i => i.id === id);
+  if (!item) return;
+  item.date = inp.value;
+  save(); renderList(type);
+}
+
+function onCustomName(inp, type, id) {
+  const item = state[type].find(i => i.id === id);
+  if (!item) return;
+  item.customName = inp.value;
+  save();
+}
+
+/* ── init ── */
+load();
+if (state.down.length === 0 && state.up.length === 0) {
+  state.down.push({ id: uid(), reason: 'discharge', date: '', customName: '' });
+  state.up.push({ id: uid(), reason: 'work', date: '', customName: '' });
+}
+render();
+</script>
+</body>
+</html>
