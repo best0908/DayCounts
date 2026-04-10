@@ -485,18 +485,19 @@ function renderList(type) {
     const days = diffDays(item.date);
     const emoji = getEmoji(reasons, item.reason, idx);
 
+    const noDate = !item.date;
     let numText, labelTop, labelBot, gradient;
     if (type === 'down') {
       gradient = idx % 2 === 0 ? 'rb-pink' : 'rb-purple';
-      if (days > 0)      { labelTop = '剩下'; numText = days;  labelBot = `天 ${emoji}`; }
-      else if (days === 0) { labelTop = '就是'; numText = '今天'; labelBot = `到了！${emoji}`; }
-      else                 { labelTop = '已過'; numText = Math.abs(days); labelBot = `天 ${emoji}`; }
+      if (noDate)            { labelTop = ''; numText = ''; labelBot = ''; }
+      else if (days > 0)     { labelTop = '剩下'; numText = days;  labelBot = `天 ${emoji}`; }
+      else if (days === 0)   { labelTop = '就是'; numText = '今天'; labelBot = `到了！${emoji}`; }
+      else                   { labelTop = '已過'; numText = Math.abs(days); labelBot = `天 ${emoji}`; }
     } else {
       gradient = 'rb-teal';
-      const d = Math.abs(days);
       labelTop = '';
-      numText  = d;
-      labelBot = `天，你好棒！${emoji}`;
+      if (noDate) { numText = ''; labelBot = ''; }
+      else        { numText = Math.abs(days); labelBot = `天，你好棒！${emoji}`; }
     }
 
     const isCustom = item.reason === 'custom';
@@ -534,9 +535,10 @@ function renderList(type) {
           </div>
         </div>
         <div class="result-box ${gradient}">
-          ${labelTop ? `<div class="rb-label">${labelTop}</div>` : ''}
-          <div class="rb-num">${numText}</div>
-          <div class="rb-unit">${labelBot}</div>
+          ${noDate
+            ? `<div class="rb-unit" style="font-size:13px;opacity:0.85;line-height:1.6;text-align:center;">請選擇<br>${type === 'down' ? '目標日期' : '開始日期'} 🌸</div>`
+            : `${labelTop ? `<div class="rb-label">${labelTop}</div>` : ''}<div class="rb-num">${numText}</div><div class="rb-unit">${labelBot}</div>`
+          }
         </div>
       </div>
       <div class="card-foot ${footClass}">
